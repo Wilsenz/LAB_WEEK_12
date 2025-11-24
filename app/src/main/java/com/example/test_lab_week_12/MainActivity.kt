@@ -9,6 +9,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModel
 import java.util.Calendar
 import com.google.android.material.snackbar.Snackbar
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import androidx.lifecycle.repeatOnLifecycle
 
 class MainActivity : AppCompatActivity() {
     private val movieAdapter by lazy {
@@ -34,26 +38,33 @@ class MainActivity : AppCompatActivity() {
                     return MovieViewModel(movieRepository) as T
                 }
             })[MovieViewModel::class.java]
-        movieViewModel.popularMovies.observe(this) { popularMovies ->
-            val currentYear =
-                Calendar.getInstance().get(Calendar.YEAR).toString()
-            movieAdapter.addMovies(
-                popularMovies
-                    .filter { movie ->
-
-                        movie.releaseDate?.startsWith(currentYear) == true
+        lifecycleScope.launch {
+            // repeatOnLifecycle is a lifecycle-aware coroutine builder
+            // Lifecycle.State.STARTED means that the coroutine will run
+            // when the activity is started
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    // collect the list of movies from the StateFlow
+                    movieViewModel.popularMovies.collect {
+                        // add the list of movies to the adapter
+                            movies ->
+                        movieAdapter.addMovies(movies)
                     }
-                    .sortedByDescending { it.popularity }
-            )
-        }
-
-        movieViewModel.error.observe(this)
-        { error ->
-            if (error.isNotEmpty()) {
-                Snackbar.make(recyclerView, error, Snackbar.LENGTH_LONG).show()
+                }
+                launch {
+                    // collect the error message from the StateFlow
+                    movieViewModel.error.collect { error ->
+                        // if an error occurs, show a Snackbar with the error
+                        if (error.isNotEmpty()) Snackbar
+                            .make(
+                                recyclerView, error, Snackbar.LENGTH_LONG
+                            ).show()
+                    }
+                }
             }
         }
     }
+
         private fun openMovieDetails(movie: Movie) {
             val intent = Intent(this, DetailsActivity::class.java).apply {
                 putExtra(DetailsActivity.EXTRA_TITLE, movie.title)
