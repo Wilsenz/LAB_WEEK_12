@@ -1,10 +1,12 @@
-package com.example.test_lab_week_12
+package com.example.lab_week_13
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
+// DELETE THIS LINE: import com.bumptech.glide.R
+// The app will automatically use com.example.lab_week_13.R because it is in the same package.
 
 class DetailsActivity : AppCompatActivity() {
 
@@ -30,15 +32,16 @@ class DetailsActivity : AppCompatActivity() {
         titleText.text = extras?.getString(EXTRA_TITLE).orEmpty()
         releaseText.text = extras?.getString(EXTRA_RELEASE).orEmpty().take(4)
 
+        // Ensure strings.xml contains a string with name="movie_overview"
         overviewText.text =
             getString(R.string.movie_overview, extras?.getString(EXTRA_OVERVIEW).orEmpty())
 
         val posterPath = extras?.getString(EXTRA_POSTER).orEmpty()
+
         Glide.with(this@DetailsActivity)
             .load("$IMAGE_URL$posterPath")
             .placeholder(R.mipmap.ic_launcher)
             .fitCenter()
             .into(poster)
-
     }
 }
